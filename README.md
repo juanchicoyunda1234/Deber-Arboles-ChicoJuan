@@ -1,89 +1,189 @@
-# Catálogo de la Biblioteca FISEI: árbol general y ABB en Java
+# Catálogo de la Biblioteca FISEI: Árbol General y ABB en Java
 
-Deber individual de Estructura de Datos (Universidad Técnica de Ambato, Facultad de Ingeniería en Sistemas, Electrónica e Industrial, Carrera de Software, Nivel III-B).
+Deber individual de **Estructura de Datos**  
+**Universidad Técnica de Ambato**  
+Facultad de Ingeniería en Sistemas, Electrónica e Industrial  
+Carrera de Software, Nivel III-B  
 
-**Estudiante:** Chico Yunda Juan Carlos
-**Docente:** Ing. José Rubén Caiza Caizabuano
+* **Estudiante:** Chico Yunda Juan Carlos  
+* **Docente:** Ing. José Rubén Caiza Caizabuano  
 
-## Descripción del problema
+---
 
-La biblioteca de la FISEI se organiza en una jerarquía: la biblioteca tiene áreas, y cada área tiene estantes. Cada estante guarda su propio catálogo de libros, ordenado por código para poder buscar rápido.
+## 1. Descripción del problema y objetivos
 
-El programa modela esa situación con dos estructuras:
+### 1.1. Contexto y caso práctico
+La biblioteca de la FISEI requiere un sistema para estructurar jerárquicamente sus instalaciones físicas y administrar los catálogos bibliográficos alojados en sus estanterías:
 
-- **Árbol general** (`ArbolBiblioteca`): cada nodo (`NodoUnidad`) puede tener cualquier cantidad de hijos. La regla de la jerarquía es BIBLIOTECA → AREA → ESTANTE.
-- **Árbol binario de búsqueda** (`CatalogoABB`): cada nodo de tipo ESTANTE tiene un catálogo de libros ordenado por código. Los menores van a la izquierda y los mayores a la derecha.
+1. **Estructura jerárquica organizacional (Árbol General n-ario):**  
+   La biblioteca se compone de diversas dependencias organizadas por niveles:
+   $$\text{BIBLIOTECA} \longrightarrow \text{ÁREA} \longrightarrow \text{ESTANTE}$$
+   Cada nodo de la jerarquía puede poseer cualquier número arbitrario de subunidades respetando estrictamente esta jerarquía. Los nodos terminales de la organización son de tipo `ESTANTE`.
 
-Todas las operaciones sobre los árboles son recursivas. No se usan `TreeSet`, `TreeMap`, `PriorityQueue`, `NavigableSet`, `NavigableMap`, `Collections.sort` ni `List.sort`.
+2. **Catálogo bibliográfico indexado (Árbol Binario de Búsqueda - ABB):**  
+   Cada estante físico aloja su propia colección de libros. Para garantizar búsquedas, inserciones y eliminaciones eficientes en tiempo promedio $O(\log n)$, cada `ESTANTE` encapsula un **Árbol Binario de Búsqueda (ABB)** ordenado rigurosamente por el **código del libro** (clave primaria entera positiva, sin valores duplicados).
 
-## Estructura del proyecto
+### 1.2. Objetivos académicos y restricciones
+* Modelar ambas estructuras empleando principios de Programación Orientada a Objetos y **recursividad pura**.
+* **Restricción estricta:** No se permite el uso de estructuras arbóreas o de ordenamiento automático de la API de Java (`TreeSet`, `TreeMap`, `PriorityQueue`, `NavigableSet`, `NavigableMap`, `Collections.sort` o `List.sort`).
+* Todas las operaciones sobre los árboles (inserción, recorridos, podas, cálculo de altura, conteo de hojas y eliminación) deben resolverse mediante algoritmos recursivos definiendo claramente casos base y casos recursivos.
+
+---
+
+## 2. Arquitectura del software y diseño modular
+
+El proyecto está organizado en 4 paquetes siguiendo separación de responsabilidades:
 
 ```
 Deber-Arboles-ChicoJuan/
 ├── src/
 │   ├── enums/
-│   │   ├── TipoUnidad.java
-│   │   └── TipoRecorrido.java
+│   │   ├── TipoUnidad.java         # Tipos de nodo jerárquico y regla de descendencia
+│   │   └── TipoRecorrido.java      # Estrategias de recorrido: PREORDEN, INORDEN, POSORDEN
 │   ├── modelo/
-│   │   ├── Libro.java
-│   │   └── UnidadBiblioteca.java
+│   │   ├── Libro.java              # Entidad libro con validación y clave inmutable
+│   │   └── UnidadBiblioteca.java   # Unidad jerárquica (código normalizado en mayúsculas)
 │   ├── negocio/
-│   │   ├── NodoLibro.java
-│   │   ├── NodoUnidad.java
-│   │   ├── ArbolBiblioteca.java
-│   │   └── CatalogoABB.java
+│   │   ├── NodoUnidad.java         # Nodo n-ario (lista de hijos y catálogo si es estante)
+│   │   ├── NodoLibro.java          # Nodo binario (libro, hijo izquierdo, hijo derecho)
+│   │   ├── ArbolBiblioteca.java    # Administrador del árbol general n-ario
+│   │   └── CatalogoABB.java        # Administrador del ABB con retos algorítmicos
 │   └── app/
-│       ├── DatosPrueba.java
-│       ├── Main.java
-│       └── PruebasBiblioteca.java
+│       ├── DatosPrueba.java        # Generador de la biblioteca inicial de prueba
+│       ├── Main.java               # Menú interactivo por consola (Scanner)
+│       └── PruebasBiblioteca.java  # Suite de 41 pruebas automatizadas
 ├── docs/
-│   └── DIAGRAMAS.md
-├── README.md
-├── TRAZAS.md
+│   └── DIAGRAMAS.md                # Diagramas de clases, jerarquía y flujos
+├── README.md                       # Documentación técnica general
+├── TRAZAS.md                       # Trazas analíticas a mano y comparativa con el programa
 └── .gitignore
 ```
 
-## Operaciones implementadas
+### 2.1. Responsabilidad de clases
 
-| Estructura | Operaciones |
-|---|---|
-| `ArbolBiblioteca` | agregar, buscar, altura, contarHojas, nivel, mostrarJerarquia, contarLibrosTotal |
-| `CatalogoABB` | insertar, buscar, contar, modificar, eliminar (hoja, un hijo, dos hijos), recorridos preorden, inorden y posorden, trazaRecorrido |
-| Retos | contarEnRango, caminoBusqueda, esABBValido |
-| Extra | desdePreorden (reconstruye un ABB a partir de su recorrido en preorden) |
+| Paquete | Clase / Tipo | Responsabilidad principal |
+|---|---|---|
+| `enums` | `TipoUnidad` | Define `BIBLIOTECA`, `AREA` y `ESTANTE`, y valida compatibilidad jerárquica con `puedeTenerHijo()`. |
+| `enums` | `TipoRecorrido` | Define los recorridos en profundidad `PREORDEN`, `INORDEN` y `POSORDEN`. |
+| `modelo` | `Libro` | Representa un libro. Clave `codigo` inmutable (`final`), valida año (1900–2026) y textos no vacíos. |
+| `modelo` | `UnidadBiblioteca` | Almacena código en mayúsculas, nombre descriptivo y tipo jerárquico. |
+| `negocio` | `NodoUnidad` | Nodo del árbol general con lista polimórfica de hijos y referencia a `CatalogoABB` (solo en estantes). |
+| `negocio` | `NodoLibro` | Nodo binario con referencias `izquierdo` y `derecho` al subárbol menor y mayor. |
+| `negocio` | `ArbolBiblioteca` | Lógica del árbol general: inserción validada, búsqueda, cálculo de altura, hojas, nivel y total de libros. |
+| `negocio` | `CatalogoABB` | Lógica del ABB: inserción ordenada, búsqueda, eliminación (3 casos), trazas paso a paso y retos. |
+| `app` | `DatosPrueba` | Construye el árbol general inicial con 7 unidades, 4 hojas y 13 libros cargados. |
+| `app` | `Main` | Menú interactivo por consola para manipulación integral de la biblioteca. |
+| `app` | `PruebasBiblioteca` | Batería de pruebas automatizadas con 13 casos de prueba y 41 aserciones. |
 
-## Cómo compilar y ejecutar
+---
 
-Se necesita JDK 17 o superior. Desde la carpeta raíz del proyecto:
+## 3. Estructura de datos inicial
 
-```bash
-mkdir out
-javac -d out $(find src -name "*.java")
+El sistema se inicializa con la siguiente configuración oficial de prueba:
+
+```
+BIB - Biblioteca FISEI (raíz)
+├── SW - Software (Área)
+│   ├── SW-E1 - Estante 1 de Software (Estante) -> [60, 35, 80, 20, 45, 70, 90, 40, 75]
+│   └── SW-E2 - Estante 2 de Software (Estante) -> [15, 10, 25]
+├── TI - Tecnologias de la Informacion (Área)
+│   └── TI-E1 - Estante 1 de TI (Estante)       -> [50]
+└── TEL - Telecomunicaciones (Área, sin estantes)
 ```
 
-Programa con menú:
+### Métricas esperadas del árbol inicial
+* **Total de unidades:** 7
+* **Altura del árbol general:** 2 (medida en aristas)
+* **Cantidad de hojas:** 4 (`SW-E1`, `SW-E2`, `TI-E1`, `TEL`)
+* **Total de libros:** 13 libros distribuidos entre los 3 estantes
 
+### Recorridos del catálogo SW-E1
+
+| Recorrido | Secuencia de códigos |
+|---|---|
+| **Preorden** ($R \to I \to D$) | `60 35 20 45 40 80 70 75 90` |
+| **Inorden** ($I \to R \to D$)  | `20 35 40 45 60 70 75 80 90` *(orden estrictamente ascendente)* |
+| **Posorden** ($I \to D \to R$) | `20 40 45 35 75 70 90 80 60` |
+
+---
+
+## 4. Operaciones implementadas
+
+### 4.1. Árbol General (`ArbolBiblioteca`)
+* `boolean agregar(String codigoPadre, UnidadBiblioteca nueva)`: inserta una unidad validando unicidad de código y la regla `BIBLIOTECA -> AREA -> ESTANTE`.
+* `NodoUnidad buscar(String codigo)`: búsqueda recursiva por código sin distinción de mayúsculas/minúsculas.
+* `int altura()`: altura del árbol en aristas (caso base: hoja = 0, árbol vacío = -1).
+* `int contarHojas()`: cantidad de nodos terminales sin descendientes.
+* `int nivel(String codigo)`: distancia en aristas desde la raíz hasta el nodo indicado (-1 si no existe).
+* `String mostrarJerarquia()`: representación visual jerárquica preorden con indentación de 2 espacios por nivel.
+* `int contarLibrosTotal()`: acumulación recursiva del total de libros alojados en todos los estantes.
+
+### 4.2. Catálogo ABB (`CatalogoABB`)
+* `boolean insertar(Libro libro)`: inserción ordenada. Rechaza claves duplicadas retornando `false`.
+* `Libro buscar(int codigo)`: búsqueda binaria recursiva $O(\log n)$.
+* `int contar()`: conteo recursivo de nodos en el ABB.
+* `boolean modificar(int codigo, String titulo, String autor, int anio)`: actualiza datos manteniendo inmutable la clave de ordenamiento.
+* `boolean eliminar(int codigo)`: eliminación recursiva que cubre los 3 casos canónicos:
+  1. **Nodo hoja:** se desvincula fijando la referencia del padre a `null`.
+  2. **Nodo con un solo hijo:** se sustituye directamente por su único descendiente.
+  3. **Nodo con dos hijos:** se reemplaza por su **sucesor inorden** (el menor del subárbol derecho) y se elimina recursivamente dicho sucesor.
+* `String trazaRecorrido(TipoRecorrido tipo)`: traza didáctica y paso a paso que detalla entradas a nodos (`"entra X"`), visitas (`"VISITA X"`) y retrocesos por nulo (`"null -> regresa"`), finalizando con la secuencia generada.
+
+### 4.3. Retos algorítmicos implementados
+* `int contarEnRango(int a, int b)`: cuenta libros cuyos códigos se ubiquen en $[a, b]$ aplicando **poda de ramas**:
+  * Si $\text{código} < a$, no explora el subárbol izquierdo.
+  * Si $\text{código} > b$, no explora el subárbol derecho.
+* `List<Integer> caminoBusqueda(int codigo)`: registra el camino de búsqueda desde la raíz hasta el nodo encontrado o hasta el punto donde se determina su inexistencia.
+* `boolean esABBValido()`: verifica la integridad del ABB pasando cotas $(\min, \max)$ descendentes en el árbol, asegurando que ningún subnodo viole la propiedad de búsqueda respecto a todos sus ancestros.
+* **Extra:** `static CatalogoABB desdePreorden(int[] preorden)`: reconstruye de manera determinista un ABB a partir de su secuencia preorden sin realizar inserciones estándar consecutivas.
+
+---
+
+## 5. Compilación, ejecución y pruebas
+
+### 5.1. Requisitos
+* JDK 17 o superior instalado.
+* Terminal con soporte para comandos estándar o PowerShell.
+
+### 5.2. Compilación
+Desde la raíz del proyecto (`Deber-Arboles-ChicoJuan/`):
+
+```bash
+# Crear directorio de compilación
+mkdir out
+
+# Compilar todos los paquetes en Windows / Linux / macOS
+javac -d out src/enums/*.java src/modelo/*.java src/negocio/*.java src/app/*.java
+```
+
+### 5.3. Ejecución del programa interactivo
 ```bash
 java -cp out app.Main
 ```
 
-Pruebas automáticas (13 grupos, 41 verificaciones):
-
+### 5.4. Ejecución de la suite de pruebas automatizadas
 ```bash
 java -cp out app.PruebasBiblioteca
 ```
 
-La última línea de las pruebas debe ser `41/41 pruebas OK`.
+La suite evalúa **13 grupos de prueba** y **41 verificaciones unitarias**:
+1. Biblioteca solo con la raíz (altura 0, 1 hoja).
+2. Biblioteca inicial (altura 2, 4 hojas, 13 libros).
+3. Niveles de unidades (`BIB`, `sw`, `SW-E2`, nodo inexistente `XYZ`).
+4. Inserción inválida en jerarquía (estante bajo biblioteca, código repetido).
+5. Recorridos de SW-E1 (preorden, inorden, posorden y traza explicativa).
+6. Rechazo de códigos duplicados en ABB.
+7. Retos: camino de búsqueda y conteo con poda en rango.
+8. Eliminaciones compuestas: hoja, un hijo y dos hijos (sucesor inorden).
+9. Búsqueda, modificación y eliminación sobre códigos inexistentes.
+10. Validaciones de dominio en Libro (`IllegalArgumentException` en código, año y título).
+11. Detección de nieto mal ubicado con `esABBValido()`.
+12. Reconstrucción de árbol con `desdePreorden()`.
+13. Modificación de atributos sin alteración del código primario.
 
-En Windows, si `find` no está disponible, compile con:
+### 5.5. Captura de PruebasBiblioteca
 
-```bash
-javac -d out src/enums/*.java src/modelo/*.java src/negocio/*.java src/app/*.java
-```
-
-## Captura de PruebasBiblioteca
-
-Salida de `java -cp out app.PruebasBiblioteca`, que termina con `41/41 pruebas OK`:
+Salida completa de `java -cp out app.PruebasBiblioteca`:
 
 ```text
 ===== PRUEBAS BIBLIOTECA =====
@@ -152,54 +252,9 @@ BIB - Biblioteca FISEI
 41/41 pruebas OK
 ```
 
-## Menú del programa
+---
 
-Primero se debe cargar la estructura inicial (opción 1).
+## 6. Documentación técnica complementaria
 
-| Opción | Acción |
-|---|---|
-| 1 | Cargar la estructura inicial |
-| 2 | Mostrar la jerarquía |
-| 3 | Agregar y buscar unidades |
-| 4 | Consultar altura, hojas, nivel y total de libros |
-| 5 | Insertar, buscar, modificar y eliminar libros de un estante |
-| 6 | Mostrar los recorridos con su traza |
-| 7 | Ejecutar los retos |
-| 0 | Salir |
-
-## Datos iniciales
-
-```
-BIB - Biblioteca FISEI
-  SW - Software
-    SW-E1 - Estante 1 de Software   (60, 35, 80, 20, 45, 70, 90, 40, 75)
-    SW-E2 - Estante 2 de Software   (15, 10, 25)
-  TI - Tecnologias de la Informacion
-    TI-E1 - Estante 1 de TI         (50)
-  TEL - Telecomunicaciones
-```
-
-Resultados esperados de la estructura inicial: altura 2, 4 hojas y 13 libros.
-
-Recorridos del estante SW-E1:
-
-| Recorrido | Secuencia |
-|---|---|
-| Preorden | 60 35 20 45 40 80 70 75 90 |
-| Inorden | 20 35 40 45 60 70 75 80 90 |
-| Posorden | 20 40 45 35 75 70 90 80 60 |
-
-## Decisiones de diseño
-
-- El código de un libro es `final`: una vez creado no se puede cambiar, porque es la clave de ordenamiento del ABB.
-- Insertar un código repetido devuelve `false` y no modifica el árbol.
-- Eliminar un nodo con dos hijos usa el sucesor inorden (el menor del subárbol derecho).
-- `esABBValido` pasa límites mínimo y máximo hacia abajo, así detecta también un nieto mal ubicado y no solo la relación padre-hijo.
-- `contarEnRango` poda ramas: si el código del nodo es menor que el límite inferior solo baja por la derecha, y si es mayor que el superior solo baja por la izquierda.
-- Los datos inválidos (código menor o igual a 0, textos vacíos, año fuera de 1900 a 2026) lanzan `IllegalArgumentException`.
-
-## Entregables relacionados
-
-- `docs/DIAGRAMAS.md`: diagramas de clases, árbol general, ABB de SW-E1 y flujo de eliminación, en Mermaid (se ven directo en GitHub).
-- `TRAZAS.md`: resolución a mano del ABB con los códigos personales y comparación con la salida del programa.
-- Informe en PDF `Deber-Arboles-ChicoJuan.pdf` entregado en Moodle.
+* [docs/DIAGRAMAS.md](docs/DIAGRAMAS.md): diagramas de clases, árbol general de la biblioteca, estructura del ABB de SW-E1 y flujos de eliminación de nodos.
+* [TRAZAS.md](TRAZAS.md): resolución analítica a mano del ABB con los códigos personales y comparación rigurosa con la salida del programa.
