@@ -1,6 +1,6 @@
 # Diagramas del proyecto
 
-Diagramas del catálogo de la Biblioteca FISEI. Se visualizan directamente en GitHub porque están escritos en Mermaid.
+Diagramas del catálogo de la Biblioteca FISEI.
 
 ## 1. Diagrama de clases: enumeraciones, modelo y nodos
 
