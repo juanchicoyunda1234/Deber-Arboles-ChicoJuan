@@ -1,0 +1,6 @@
+out/
+out_trazas/
+*.class
+.idea/
+.vscode/
+*.iml
